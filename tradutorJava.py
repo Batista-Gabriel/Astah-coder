@@ -1,5 +1,5 @@
 import pytesseract as ocr
-ocr.pytesseract.tesseract_cmd = r"C:\Users\Gabriel\AppData\Local\Tesseract-OCR\tesseract.exe"
+ocr.pytesseract.tesseract_cmd = r"C:\Users\userName\AppData\Local\Tesseract-OCR\tesseract.exe"
 from PIL import Image
 
 isAttribute = 1
@@ -65,7 +65,7 @@ def methodsWriter(methodsConjunction):  #Write every attribute
 
 
 def imageReader(): #translate image into a phrase    
-    return (ocr.image_to_string(Image.open(r'teste.png'), lang='por'))
+    return (ocr.image_to_string(Image.open(r'image.png'), lang='por'))
 
 
 if __name__ == '__main__':
