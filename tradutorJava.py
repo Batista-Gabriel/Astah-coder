@@ -1,9 +1,10 @@
 import pytesseract as ocr
-ocr.pytesseract.tesseract_cmd = r"C:\Users\userName\AppData\Local\Tesseract-OCR\tesseract.exe"
+ocr.pytesseract.tesseract_cmd = r"C:\Users\user\AppData\Local\Tesseract-OCR\tesseract.exe"
 from PIL import Image
 
-isAttribute = 1
-isMethod = 2
+normal = 0
+isAttribute= isGet = 1
+isMethod= isSet = 2
 
 def lineSpliter(text): #Split the text into phrases
     phrases = text.splitlines()
@@ -21,6 +22,21 @@ def phraseClassifier(phrase): #Classifies in attribute and method
     if phrase[0] =='+':
         return isMethod
 
+def methodClassifier(method): #classifies methods in get e set 
+    if (method[:3]=='get'):
+        return isGet
+    if (method[:3]=='set'):
+        return isSet
+    else:
+        return normal
+
+def getAndSetWriter(methodName,methodType):
+    parameter = methodName[3].lower() + methodName[4:]
+    #print(parameter)
+    if methodType == isGet:
+        return ('  return this.'+ parameter +";")
+    if methodType == isSet:
+        return ('  this.'+ parameter +" = "+ parameter +";")
 
 def variableWriter(variable): #"translates" variable name 
     variableDiv = variable.rsplit(":") #split the variable phrase into what comes before and after ":"
@@ -34,34 +50,31 @@ def attributeWriter(attributes): #write every attribute
 
 
 def methodsWriter(methodsConjunction):  #Write every attribute
-    methods = []
-    parameters= ''
-    
+   
     for method in methodsConjunction: #take methods one by one
-         
-        methodName = method.rpartition("(")[0] #get string before "("
-        
+        function ='' 
+        parameters='' 
+        methodName = method.rpartition("(")[0].replace(" ","") #get string before "("
+        methodClassification = methodClassifier(methodName)
+            
     
         methodReturn = method.rpartition(")")[2].rpartition(":")[2] #get string inside parentheses
         parametersList = method.rpartition("(")[2].rpartition(")")[0].rsplit(",") #get what is inside parentheses and then separate parameters
-        for space in parametersList: #if there is any empty space inside the list, it is removed
-            if len(space) <= 2:
-                parametersList.remove(space)
-    
-        if parametersList: #if there is a parameter
-            parameters=''
-            if  len(parametersList) == 1: #if only a parameter
-                parameters = variableWriter(parametersList[0])
-            else:
-                for parameter in parametersList:
-                    parameters = variableWriter(parameter)+ ","+parameters
-                
-                if parameters[len(parameters)-1] ==',': #if the last character is ','
-                    parameters=parameters[:-1]
 
-        methodCode = "public" +methodName + "(" + parameters + "){\n\n}\n" #concatenate method String
+        if(methodClassification != normal):
+                   
+           function = getAndSetWriter(methodName,methodClassification)          
+
+        if len(parametersList[0])>= 2: #if there is a parameter       
+            
+                
+            for parameter in parametersList:
+                parameters = variableWriter(parameter)+ ","+parameters
+            if parameters[len(parameters)-1] ==',': #if the last character is ','
+                parameters=parameters[:-1]
+
+        methodCode = "public "+methodReturn+" " +methodName + "(" + parameters + "){\n"+function+"\n}\n" #concatenate method String
         print(methodCode)
-    
 
 
 def imageReader(): #translate image into a phrase    
@@ -86,8 +99,7 @@ if __name__ == '__main__':
         if lineClassification == isMethod:
             line = line.replace("+","")
             methodsList.append( line)
-            
-     
+                
     attributeWriter(attributesList)
     methodsWriter(methodsList)
     
